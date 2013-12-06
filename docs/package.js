@@ -18,7 +18,7 @@
     "pixie.cson": {
       "path": "pixie.cson",
       "mode": "100644",
-      "content": "version: \"0.1.0\"\nentryPoint: \"random\"\n",
+      "content": "version: \"0.2.0\"\nentryPoint: \"random\"\n",
       "type": "blob"
     },
     "random.coffee.md": {
@@ -37,7 +37,7 @@
   "distribution": {
     "pixie": {
       "path": "pixie",
-      "content": "module.exports = {\"version\":\"0.1.0\",\"entryPoint\":\"random\"};",
+      "content": "module.exports = {\"version\":\"0.2.0\",\"entryPoint\":\"random\"};",
       "type": "blob"
     },
     "random": {
@@ -54,7 +54,7 @@
   "progenitor": {
     "url": "http://strd6.github.io/editor/"
   },
-  "version": "0.1.0",
+  "version": "0.2.0",
   "entryPoint": "random",
   "repository": {
     "id": 13576812,
