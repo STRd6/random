@@ -5,7 +5,7 @@ equals = assert.equal
 test = it
 
 describe "Random", ->
-  
+
   test "methods", ->
     [
       "angle"
