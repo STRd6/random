@@ -1,11 +1,11 @@
 (function(pkg) {
   (function() {
-  var annotateSourceURL, cacheFor, circularGuard, defaultEntryPoint, fileSeparator, generateRequireFn, global, isPackage, loadModule, loadPackage, loadPath, normalizePath, rootModule, startsWith,
+  var annotateSourceURL, cacheFor, circularGuard, defaultEntryPoint, fileSeparator, generateRequireFn, global, isPackage, loadModule, loadPackage, loadPath, normalizePath, publicAPI, rootModule, startsWith,
     __slice = [].slice;
 
   fileSeparator = '/';
 
-  global = window;
+  global = self;
 
   defaultEntryPoint = "main";
 
@@ -70,11 +70,14 @@
   };
 
   loadModule = function(pkg, path) {
-    var args, context, dirname, file, module, program, values;
+    var args, content, context, dirname, file, module, program, values;
     if (!(file = pkg.distribution[path])) {
       throw "Could not find file at " + path + " in " + pkg.name;
     }
-    program = annotateSourceURL(file.content, pkg, path);
+    if ((content = file.content) == null) {
+      throw "Malformed package. No content for file at " + path + " in " + pkg.name;
+    }
+    program = annotateSourceURL(content, pkg, path);
     dirname = path.split(fileSeparator).slice(0, -1).join(fileSeparator);
     module = {
       path: dirname,
@@ -106,6 +109,7 @@
   };
 
   generateRequireFn = function(pkg, module) {
+    var fn;
     if (module == null) {
       module = rootModule;
     }
@@ -115,9 +119,11 @@
     if (pkg.scopedName == null) {
       pkg.scopedName = "ROOT";
     }
-    return function(path) {
+    fn = function(path) {
       var otherPackage;
-      if (isPackage(path)) {
+      if (typeof path === "object") {
+        return loadPackage(path);
+      } else if (isPackage(path)) {
         if (!(otherPackage = pkg.dependencies[path])) {
           throw "Package: " + path + " not found.";
         }
@@ -132,14 +138,26 @@
         return loadPath(module, pkg, path);
       }
     };
+    fn.packageWrapper = publicAPI.packageWrapper;
+    fn.executePackageWrapper = publicAPI.executePackageWrapper;
+    return fn;
+  };
+
+  publicAPI = {
+    generateFor: generateRequireFn,
+    packageWrapper: function(pkg, code) {
+      return ";(function(PACKAGE) {\n  var src = " + (JSON.stringify(PACKAGE.distribution.main.content)) + ";\n  var Require = new Function(\"PACKAGE\", \"return \" + src)({distribution: {main: {content: src}}});\n  var require = Require.generateFor(PACKAGE);\n  " + code + ";\n})(" + (JSON.stringify(pkg, null, 2)) + ");";
+    },
+    executePackageWrapper: function(pkg) {
+      return publicAPI.packageWrapper(pkg, "require('./" + pkg.entryPoint + "')");
+    },
+    loadPackage: loadPackage
   };
 
   if (typeof exports !== "undefined" && exports !== null) {
-    exports.generateFor = generateRequireFn;
+    module.exports = publicAPI;
   } else {
-    global.Require = {
-      generateFor: generateRequireFn
-    };
+    global.Require = publicAPI;
   }
 
   startsWith = function(string, prefix) {
@@ -160,9 +178,10 @@
     return "" + program + "\n//# sourceURL=" + pkg.scopedName + "/" + path;
   };
 
+  return publicAPI;
+
 }).call(this);
 
-//# sourceURL=main.coffee
   window.require = Require.generateFor(pkg);
 })({
   "source": {
@@ -192,7 +211,7 @@
     },
     "test/random.coffee": {
       "path": "test/random.coffee",
-      "content": "Random = require \"../random\"\n\nok = assert\nequals = assert.equal\ntest = it\n\ndescribe \"Random\", ->\n  \n  test \"methods\", ->\n    [\n      \"angle\"\n      \"binomial\"\n      \"between\"\n      \"rand\"\n      \"signed\"\n    ].forEach (name) ->\n      ok(Random[name], name)\n\n  it \"should have binomial\", ->\n    result = Random.binomial()\n\n    assert result is 1 or result is 0\n",
+      "content": "Random = require \"../random\"\n\nok = assert\nequals = assert.equal\ntest = it\n\ndescribe \"Random\", ->\n\n  test \"methods\", ->\n    [\n      \"angle\"\n      \"binomial\"\n      \"between\"\n      \"rand\"\n      \"signed\"\n    ].forEach (name) ->\n      ok(Random[name], name)\n\n  it \"should have binomial\", ->\n    result = Random.binomial()\n\n    assert result is 1 or result is 0\n",
       "mode": "100644",
       "type": "blob"
     }
@@ -215,123 +234,18 @@
     }
   },
   "progenitor": {
-    "url": "http://www.danielx.net/editor/"
+    "url": "https://danielx.net/editor/"
   },
   "version": "0.2.1",
   "entryPoint": "random",
   "repository": {
-    "id": 13576812,
-    "name": "random",
-    "full_name": "distri/random",
-    "owner": {
-      "login": "distri",
-      "id": 6005125,
-      "avatar_url": "https://avatars.githubusercontent.com/u/6005125?",
-      "gravatar_id": "192f3f168409e79c42107f081139d9f3",
-      "url": "https://api.github.com/users/distri",
-      "html_url": "https://github.com/distri",
-      "followers_url": "https://api.github.com/users/distri/followers",
-      "following_url": "https://api.github.com/users/distri/following{/other_user}",
-      "gists_url": "https://api.github.com/users/distri/gists{/gist_id}",
-      "starred_url": "https://api.github.com/users/distri/starred{/owner}{/repo}",
-      "subscriptions_url": "https://api.github.com/users/distri/subscriptions",
-      "organizations_url": "https://api.github.com/users/distri/orgs",
-      "repos_url": "https://api.github.com/users/distri/repos",
-      "events_url": "https://api.github.com/users/distri/events{/privacy}",
-      "received_events_url": "https://api.github.com/users/distri/received_events",
-      "type": "Organization",
-      "site_admin": false
-    },
-    "private": false,
-    "html_url": "https://github.com/distri/random",
-    "description": "Random generation.",
-    "fork": false,
-    "url": "https://api.github.com/repos/distri/random",
-    "forks_url": "https://api.github.com/repos/distri/random/forks",
-    "keys_url": "https://api.github.com/repos/distri/random/keys{/key_id}",
-    "collaborators_url": "https://api.github.com/repos/distri/random/collaborators{/collaborator}",
-    "teams_url": "https://api.github.com/repos/distri/random/teams",
-    "hooks_url": "https://api.github.com/repos/distri/random/hooks",
-    "issue_events_url": "https://api.github.com/repos/distri/random/issues/events{/number}",
-    "events_url": "https://api.github.com/repos/distri/random/events",
-    "assignees_url": "https://api.github.com/repos/distri/random/assignees{/user}",
-    "branches_url": "https://api.github.com/repos/distri/random/branches{/branch}",
-    "tags_url": "https://api.github.com/repos/distri/random/tags",
-    "blobs_url": "https://api.github.com/repos/distri/random/git/blobs{/sha}",
-    "git_tags_url": "https://api.github.com/repos/distri/random/git/tags{/sha}",
-    "git_refs_url": "https://api.github.com/repos/distri/random/git/refs{/sha}",
-    "trees_url": "https://api.github.com/repos/distri/random/git/trees{/sha}",
-    "statuses_url": "https://api.github.com/repos/distri/random/statuses/{sha}",
-    "languages_url": "https://api.github.com/repos/distri/random/languages",
-    "stargazers_url": "https://api.github.com/repos/distri/random/stargazers",
-    "contributors_url": "https://api.github.com/repos/distri/random/contributors",
-    "subscribers_url": "https://api.github.com/repos/distri/random/subscribers",
-    "subscription_url": "https://api.github.com/repos/distri/random/subscription",
-    "commits_url": "https://api.github.com/repos/distri/random/commits{/sha}",
-    "git_commits_url": "https://api.github.com/repos/distri/random/git/commits{/sha}",
-    "comments_url": "https://api.github.com/repos/distri/random/comments{/number}",
-    "issue_comment_url": "https://api.github.com/repos/distri/random/issues/comments/{number}",
-    "contents_url": "https://api.github.com/repos/distri/random/contents/{+path}",
-    "compare_url": "https://api.github.com/repos/distri/random/compare/{base}...{head}",
-    "merges_url": "https://api.github.com/repos/distri/random/merges",
-    "archive_url": "https://api.github.com/repos/distri/random/{archive_format}{/ref}",
-    "downloads_url": "https://api.github.com/repos/distri/random/downloads",
-    "issues_url": "https://api.github.com/repos/distri/random/issues{/number}",
-    "pulls_url": "https://api.github.com/repos/distri/random/pulls{/number}",
-    "milestones_url": "https://api.github.com/repos/distri/random/milestones{/number}",
-    "notifications_url": "https://api.github.com/repos/distri/random/notifications{?since,all,participating}",
-    "labels_url": "https://api.github.com/repos/distri/random/labels{/name}",
-    "releases_url": "https://api.github.com/repos/distri/random/releases{/id}",
-    "created_at": "2013-10-15T00:28:31Z",
-    "updated_at": "2013-12-06T23:38:39Z",
-    "pushed_at": "2013-12-06T23:38:39Z",
-    "git_url": "git://github.com/distri/random.git",
-    "ssh_url": "git@github.com:distri/random.git",
-    "clone_url": "https://github.com/distri/random.git",
-    "svn_url": "https://github.com/distri/random",
-    "homepage": null,
-    "size": 132,
-    "stargazers_count": 0,
-    "watchers_count": 0,
-    "language": "CoffeeScript",
-    "has_issues": true,
-    "has_downloads": true,
-    "has_wiki": true,
-    "forks_count": 0,
-    "mirror_url": null,
-    "open_issues_count": 0,
-    "forks": 0,
-    "open_issues": 0,
-    "watchers": 0,
-    "default_branch": "master",
-    "master_branch": "master",
-    "permissions": {
-      "admin": true,
-      "push": true,
-      "pull": true
-    },
-    "organization": {
-      "login": "distri",
-      "id": 6005125,
-      "avatar_url": "https://avatars.githubusercontent.com/u/6005125?",
-      "gravatar_id": "192f3f168409e79c42107f081139d9f3",
-      "url": "https://api.github.com/users/distri",
-      "html_url": "https://github.com/distri",
-      "followers_url": "https://api.github.com/users/distri/followers",
-      "following_url": "https://api.github.com/users/distri/following{/other_user}",
-      "gists_url": "https://api.github.com/users/distri/gists{/gist_id}",
-      "starred_url": "https://api.github.com/users/distri/starred{/owner}{/repo}",
-      "subscriptions_url": "https://api.github.com/users/distri/subscriptions",
-      "organizations_url": "https://api.github.com/users/distri/orgs",
-      "repos_url": "https://api.github.com/users/distri/repos",
-      "events_url": "https://api.github.com/users/distri/events{/privacy}",
-      "received_events_url": "https://api.github.com/users/distri/received_events",
-      "type": "Organization",
-      "site_admin": false
-    },
-    "network_count": 0,
-    "subscribers_count": 1,
     "branch": "master",
+    "default_branch": "master",
+    "full_name": "distri/random",
+    "homepage": null,
+    "description": "Random generation.",
+    "html_url": "https://github.com/distri/random",
+    "url": "https://api.github.com/repos/distri/random",
     "publishBranch": "gh-pages"
   },
   "dependencies": {}
