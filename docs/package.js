@@ -199,7 +199,7 @@
     },
     "pixie.cson": {
       "path": "pixie.cson",
-      "content": "version: \"0.2.1\"\nentryPoint: \"random\"\n",
+      "content": "version: \"0.2.2\"\nentryPoint: \"random\"\n",
       "mode": "100644",
       "type": "blob"
     },
@@ -219,7 +219,7 @@
   "distribution": {
     "pixie": {
       "path": "pixie",
-      "content": "module.exports = {\"version\":\"0.2.1\",\"entryPoint\":\"random\"};",
+      "content": "module.exports = {\"version\":\"0.2.2\",\"entryPoint\":\"random\"};",
       "type": "blob"
     },
     "random": {
@@ -236,7 +236,7 @@
   "progenitor": {
     "url": "https://danielx.net/editor/"
   },
-  "version": "0.2.1",
+  "version": "0.2.2",
   "entryPoint": "random",
   "repository": {
     "branch": "master",
